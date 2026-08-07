@@ -76,7 +76,7 @@ New repository secret**. Add two secrets:
 - `LEETCODE_SESSION` → the value you copied
 - `LEETCODE_CSRF_TOKEN` → the csrftoken value you copied
 
-That's it — no GitHub token needed from you. The workflow uses GitHub's
+No GitHub token needed. The workflow uses GitHub's
 own built-in `GITHUB_TOKEN`, automatically scoped to just this repo.
 
 ### 4. Turn it on
