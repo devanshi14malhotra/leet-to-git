@@ -9,7 +9,7 @@ party hosting service to maintain.
 Every 15 minutes, a scheduled workflow checks LeetCode for new accepted
 submissions. When it finds one, it fetches the solution code and the
 problem metadata, then writes a new folder under `problems/` named by
-the problem number and slug, for example:
+the problem number and slug, for example:-
 
 ```
 problems/1-two-sum/solution.py
