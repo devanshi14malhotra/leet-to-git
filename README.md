@@ -4,7 +4,7 @@ This repository is a backend automation tool that tracks accepted
 LeetCode submissions and syncs them into a private GitHub repository
 without manual intervention. The pipeline runs entirely inside GitHub
 Actions, so there is no dedicated server, no local daemon, and no third-
-party hosting service to maintain.
+party hosting service to maintain...
 
 Every 15 minutes, a scheduled workflow checks LeetCode for new accepted
 submissions. When it finds one, it fetches the solution code and the
