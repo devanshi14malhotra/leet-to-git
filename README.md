@@ -31,6 +31,16 @@ difficulty and topic tags.
 - `requirements.txt` lists the Python dependency used by the sync
   script.
 
+## Local Secrets
+
+For local runs, keep your secrets in a root-level `.env` file. Use
+`.env.example` as the starting point, copy it to `.env`, and fill in your
+own values. The `.env` file is ignored by Git, so it stays on your
+machine.
+
+The sync script automatically loads `.env` when it exists, so you do not
+need to export variables manually if you use that file.
+
 ## How It Works
 
 - The workflow runs on GitHub's infrastructure only.
@@ -58,7 +68,20 @@ git remote add origin https://github.com/devanshi14malhotra/leet-to-git.git
 git push -u origin main
 ```
 
-### 2. Get your LeetCode session cookie
+### 2. Create your local `.env`
+
+Copy `.env.example` to `.env` in the repo root, then replace the dummy
+values with your own secrets and GitHub identity:
+
+- `LEETCODE_SESSION` for your LeetCode session cookie
+- `LEETCODE_CSRF_TOKEN` for your LeetCode csrf token
+- `COMMIT_AUTHOR_NAME` for the commit author name you want on GitHub
+- `COMMIT_AUTHOR_EMAIL` for a verified email on your GitHub account
+
+If you prefer, you can use your GitHub no-reply email for
+`COMMIT_AUTHOR_EMAIL`.
+
+### 3. Get your LeetCode session cookie
 
 1. Log into leetcode.com in your browser.
 2. Open DevTools → Application (Chrome) / Storage (Firefox) → Cookies →
@@ -69,7 +92,7 @@ These expire every few weeks — when they do, the workflow will fail
 with a clear "session expired" message in the Actions log, and you
 just repeat this step with fresh values.
 
-### 3. Add them as repo secrets
+### 4. Add them as repo secrets
 
 In your new GitHub repo: **Settings → Secrets and variables → Actions →
 New repository secret**. Add two secrets:
@@ -80,7 +103,7 @@ New repository secret**. Add two secrets:
 No GitHub token needed. The workflow uses GitHub's
 own built-in `GITHUB_TOKEN`, automatically scoped to just this repo.
 
-### 4. Turn it on
+### 5. Turn it on
 
 Go to the **Actions** tab in your repo. If prompted, click "I understand
 my workflows, enable them." The workflow will now run automatically
@@ -90,7 +113,7 @@ To confirm it works right away rather than waiting: Actions tab →
 "Sync LeetCode submissions" → **Run workflow** (this is the
 `workflow_dispatch` trigger, runs it on demand).
 
-### 5. Make commits count toward your contribution graph
+### 6. Make commits count toward your contribution graph
 
 GitHub only turns your squares green when the commits are authored by
 an identity that GitHub recognizes as yours.

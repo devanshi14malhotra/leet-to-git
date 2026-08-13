@@ -22,12 +22,10 @@ import time
 import subprocess
 import requests
 
-LEETCODE_SESSION = os.environ.get("LEETCODE_SESSION")
-LEETCODE_CSRF_TOKEN = os.environ.get("LEETCODE_CSRF_TOKEN")
-
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROBLEMS_DIR = os.path.join(REPO_ROOT, "problems")
 SYNC_LOG_PATH = os.path.join(REPO_ROOT, ".synced_submissions.json")
+LOCAL_ENV_PATH = os.path.join(REPO_ROOT, ".env")
 
 LEETCODE_GRAPHQL_URL = "https://leetcode.com/graphql"
 LEETCODE_SUBMISSIONS_URL = "https://leetcode.com/api/submissions/"
@@ -39,6 +37,30 @@ LANG_EXTENSIONS = {
     "ruby": "rb", "scala": "scala", "rust": "rs", "racket": "rkt",
     "erlang": "erl", "elixir": "ex", "mysql": "sql",
 }
+
+
+def load_local_env():
+    if not os.path.exists(LOCAL_ENV_PATH):
+        return
+
+    with open(LOCAL_ENV_PATH, "r") as f:
+        for raw_line in f:
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+
+            key, value = line.split("=", 1)
+            key = key.strip()
+            value = value.strip().strip('"').strip("'")
+
+            if key and key not in os.environ:
+                os.environ[key] = value
+
+
+load_local_env()
+
+LEETCODE_SESSION = os.environ.get("LEETCODE_SESSION")
+LEETCODE_CSRF_TOKEN = os.environ.get("LEETCODE_CSRF_TOKEN")
 
 
 def require_config():
