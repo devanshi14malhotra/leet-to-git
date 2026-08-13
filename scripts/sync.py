@@ -19,6 +19,7 @@ import os
 import sys
 import json
 import time
+import subprocess
 import requests
 
 LEETCODE_SESSION = os.environ.get("LEETCODE_SESSION")
@@ -139,6 +140,16 @@ def build_problem_readme(question):
     )
 
 
+def git(*args):
+    subprocess.run(["git", *args], cwd=REPO_ROOT, check=True)
+
+
+def commit_problem(question):
+    message = f"LeetCode submission: problem {question['questionFrontendId']} - {question['title']}"
+    git("add", "-A")
+    git("commit", "-m", message)
+
+
 def main():
     require_config()
     synced_ids = load_sync_log()
@@ -173,10 +184,10 @@ def main():
 
         print(f"  -> wrote problems/{folder}/")
         synced_ids.add(sub_id)
+        save_sync_log(synced_ids)
+        commit_problem(question)
         written += 1
         time.sleep(1)  # be gentle on LeetCode's API
-
-    save_sync_log(synced_ids)
     print(f"Done. {written} new problem(s) written.")
 
 

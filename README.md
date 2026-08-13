@@ -36,7 +36,8 @@ difficulty and topic tags.
 - The workflow runs on GitHub's infrastructure only.
 - It uses repository secrets for `LEETCODE_SESSION` and
   `LEETCODE_CSRF_TOKEN`.
-- It commits only when new accepted submissions are found.
+- It creates one commit per new accepted submission, using a message
+  like `LeetCode submission: problem 704 - Binary Search`.
 - It persists sync state in `.synced_submissions.json` so previously
   recorded submissions are not written again.
 
