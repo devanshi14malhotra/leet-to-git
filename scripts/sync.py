@@ -69,19 +69,34 @@ def save_sync_log(ids):
         json.dump(sorted(ids), f, indent=2)
 
 
-def fetch_recent_accepted_submissions(limit=20):
-    resp = requests.get(
-        LEETCODE_SUBMISSIONS_URL,
-        params={"offset": 0, "limit": limit},
-        headers=leetcode_headers(),
-        timeout=15,
-    )
-    if resp.status_code == 401:
-        print("LeetCode session expired or invalid — refresh LEETCODE_SESSION / LEETCODE_CSRF_TOKEN secrets.")
-        sys.exit(1)
-    resp.raise_for_status()
-    subs = resp.json().get("submissions_dump", [])
-    return [s for s in subs if s.get("status_display") == "Accepted"]
+def fetch_recent_accepted_submissions(limit=100):
+    submissions = []
+    offset = 0
+
+    while True:
+        resp = requests.get(
+            LEETCODE_SUBMISSIONS_URL,
+            params={"offset": offset, "limit": limit},
+            headers=leetcode_headers(),
+            timeout=15,
+        )
+        if resp.status_code == 401:
+            print("LeetCode session expired or invalid — refresh LEETCODE_SESSION / LEETCODE_CSRF_TOKEN secrets.")
+            sys.exit(1)
+        resp.raise_for_status()
+
+        page = resp.json().get("submissions_dump", [])
+        if not page:
+            break
+
+        submissions.extend(s for s in page if s.get("status_display") == "Accepted")
+
+        if len(page) < limit:
+            break
+
+        offset += limit
+
+    return submissions
 
 
 def fetch_submission_details(submission_id):

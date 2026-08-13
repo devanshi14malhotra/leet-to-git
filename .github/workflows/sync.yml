@@ -12,6 +12,9 @@ permissions:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    env:
+      COMMIT_AUTHOR_NAME: ${{ vars.COMMIT_AUTHOR_NAME || 'Devanshi Malhotra' }}
+      COMMIT_AUTHOR_EMAIL: ${{ vars.COMMIT_AUTHOR_EMAIL || 'malhotra.dm07@gmail.com' }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -32,8 +35,8 @@ jobs:
 
       - name: Commit and push if anything changed
         run: |
-          git config user.name "leetcode-sync-bot"
-          git config user.email "actions@github.com"
+          git config user.name "${COMMIT_AUTHOR_NAME}"
+          git config user.email "${COMMIT_AUTHOR_EMAIL}"
           git add -A
           if git diff --cached --quiet; then
             echo "No changes to commit."

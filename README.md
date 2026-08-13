@@ -89,6 +89,19 @@ To confirm it works right away rather than waiting: Actions tab →
 "Sync LeetCode submissions" → **Run workflow** (this is the
 `workflow_dispatch` trigger, runs it on demand).
 
+### 5. Make commits count toward your contribution graph
+
+GitHub only turns your squares green when the commits are authored by
+an identity that GitHub recognizes as yours.
+
+- The workflow now defaults to `Devanshi Malhotra <malhotra.dm07@gmail.com>`.
+- If your GitHub account uses a different verified email, add repository
+  variables `COMMIT_AUTHOR_NAME` and `COMMIT_AUTHOR_EMAIL` in
+  **Settings → Secrets and variables → Actions → Variables**.
+- If the repo is private, make sure private contributions are enabled in
+  your GitHub profile settings, or private commits will not show on the
+  graph.
+
 ## Notes
 
 - 15 minutes is the schedule interval — GitHub Actions cron is
