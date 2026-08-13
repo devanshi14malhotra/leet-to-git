@@ -176,7 +176,7 @@ def main():
     require_config()
     synced_ids = load_sync_log()
 
-    submissions = fetch_recent_accepted_submissions(limit=20)
+    submissions = fetch_recent_accepted_submissions(limit=200)
     new_submissions = [s for s in submissions if str(s["id"]) not in synced_ids]
 
     if not new_submissions:

@@ -2,8 +2,9 @@ name: Sync LeetCode submissions
 
 on:
   schedule:
-    # Runs every 15 minutes. GitHub Actions cron is best-effort, not exact.
-    - cron: "*/15 * * * *"
+    # Poll every 5 minutes so recent accepted submissions are picked up quickly.
+    # GitHub cron is best-effort, not exact, but this is much closer to real-time.
+    - cron: "*/5 * * * *"
   workflow_dispatch: {}  # lets you trigger it manually from the Actions tab
 
 permissions:
