@@ -162,12 +162,34 @@ def build_problem_readme(question):
     )
 
 
+def write_submission_snapshot(folder_path, submission, details, ext):
+    submission_id = str(submission["id"])
+    snapshots_dir = os.path.join(folder_path, "submissions")
+    snapshot_dir = os.path.join(snapshots_dir, submission_id)
+    os.makedirs(snapshot_dir, exist_ok=True)
+
+    with open(os.path.join(snapshot_dir, f"solution.{ext}"), "w") as f:
+        f.write(details["code"])
+
+    metadata = {
+        "submissionId": submission_id,
+        "submittedAtEpoch": submission.get("timestamp"),
+        "lang": details["lang"]["name"],
+        "status": submission.get("status_display"),
+    }
+    with open(os.path.join(snapshot_dir, "metadata.json"), "w") as f:
+        json.dump(metadata, f, indent=2)
+
+
 def git(*args):
     subprocess.run(["git", *args], cwd=REPO_ROOT, check=True)
 
 
-def commit_problem(question):
-    message = f"LeetCode submission: problem {question['questionFrontendId']} - {question['title']}"
+def commit_problem(question, submission_id):
+    message = (
+        f"LeetCode submission: problem {question['questionFrontendId']} - "
+        f"{question['title']} (submission {submission_id})"
+    )
     git("add", "-A")
     git("commit", "-m", message)
 
@@ -203,11 +225,12 @@ def main():
             f.write(details["code"])
         with open(os.path.join(folder_path, "README.md"), "w") as f:
             f.write(build_problem_readme(question))
+        write_submission_snapshot(folder_path, sub, details, ext)
 
         print(f"  -> wrote problems/{folder}/")
         synced_ids.add(sub_id)
         save_sync_log(synced_ids)
-        commit_problem(question)
+        commit_problem(question, sub_id)
         written += 1
         time.sleep(1)  # be gentle on LeetCode's API
     print(f"Done. {written} new problem(s) written.")
