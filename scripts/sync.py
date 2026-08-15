@@ -22,6 +22,11 @@ import time
 import subprocess
 import requests
 
+
+class LeetCodeAuthError(RuntimeError):
+    """Raised when LeetCode rejects the configured session/csrf credentials."""
+
+
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROBLEMS_DIR = os.path.join(REPO_ROOT, "problems")
 SYNC_LOG_PATH = os.path.join(REPO_ROOT, ".synced_submissions.json")
@@ -104,8 +109,10 @@ def fetch_recent_accepted_submissions(limit=100):
             timeout=15,
         )
         if resp.status_code == 401:
-            print("LeetCode session expired or invalid — refresh LEETCODE_SESSION / LEETCODE_CSRF_TOKEN secrets.")
-            sys.exit(1)
+            raise LeetCodeAuthError(
+                "LeetCode session expired or invalid — refresh LEETCODE_SESSION / "
+                "LEETCODE_CSRF_TOKEN secrets."
+            )
         resp.raise_for_status()
 
         page = resp.json().get("submissions_dump", [])
@@ -198,7 +205,12 @@ def main():
     require_config()
     synced_ids = load_sync_log()
 
-    submissions = fetch_recent_accepted_submissions(limit=200)
+    try:
+        submissions = fetch_recent_accepted_submissions(limit=200)
+    except LeetCodeAuthError as exc:
+        print(exc)
+        raise SystemExit(1) from exc
+
     new_submissions = [s for s in submissions if str(s["id"]) not in synced_ids]
 
     if not new_submissions:
