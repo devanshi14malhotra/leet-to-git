@@ -33,18 +33,10 @@ jobs:
           git config user.name "${COMMIT_AUTHOR_NAME}"
           git config user.email "${COMMIT_AUTHOR_EMAIL}"
 
-      - name: Load local env values for LeetCode auth
-        run: |
-          if [ -f .env ]; then
-            set -a
-            . ./.env
-            set +a
-          fi
-
       - name: Run sync script
         env:
-          LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION || env.LEETCODE_SESSION }}
-          LEETCODE_CSRF_TOKEN: ${{ secrets.LEETCODE_CSRF_TOKEN || env.LEETCODE_CSRF_TOKEN }}
+          LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
+          LEETCODE_CSRF_TOKEN: ${{ secrets.LEETCODE_CSRF_TOKEN }}
         run: python scripts/sync.py
 
       - name: Push commits if anything changed
