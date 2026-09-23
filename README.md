@@ -6,7 +6,7 @@ without manual intervention. The pipeline runs entirely inside GitHub
 Actions, so there is no dedicated server, no local daemon, and no third-
 party hosting service to maintain.....
 
-Every 15 minutes, a scheduled workflow checks LeetCode for new accepted
+Every 15 or 30 minutes, a scheduled workflow checks LeetCode for new accepted
 submissions. When it finds one, it fetches the solution code and the
 problem metadata, then writes a new folder under `problems/` named by
 the problem number and slug, for example:-
