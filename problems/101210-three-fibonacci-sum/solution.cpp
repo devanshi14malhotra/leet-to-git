@@ -9,6 +9,6 @@ public:
             b = c;
             c = next;
         }
-        return false;;
+        return false;
     }
 };
