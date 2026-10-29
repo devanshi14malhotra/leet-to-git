@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   sync:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     env:
       COMMIT_AUTHOR_NAME: ${{ vars.COMMIT_AUTHOR_NAME || 'Devanshi Malhotra' }}
       COMMIT_AUTHOR_EMAIL: ${{ vars.COMMIT_AUTHOR_EMAIL || 'malhotra.dm07@gmail.com' }}
