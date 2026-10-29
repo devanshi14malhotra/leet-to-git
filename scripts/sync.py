@@ -27,6 +27,10 @@ class LeetCodeAuthError(RuntimeError):
     """Raised when LeetCode rejects the configured session/csrf credentials."""
 
 
+class LeetCodeAccessError(RuntimeError):
+    """Raised when LeetCode or its edge protection blocks the request."""
+
+
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROBLEMS_DIR = os.path.join(REPO_ROOT, "problems")
 SYNC_LOG_PATH = os.path.join(REPO_ROOT, ".synced_submissions.json")
@@ -81,6 +85,12 @@ def leetcode_headers():
         "Cookie": f"LEETCODE_SESSION={LEETCODE_SESSION}; csrftoken={LEETCODE_CSRF_TOKEN}",
         "x-csrftoken": LEETCODE_CSRF_TOKEN,
         "Referer": "https://leetcode.com",
+        "Origin": "https://leetcode.com",
+        "User-Agent": (
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        ),
+        "Accept": "application/json, text/plain, */*",
         "Content-Type": "application/json",
     }
 
@@ -112,6 +122,17 @@ def fetch_recent_accepted_submissions(limit=100):
             raise LeetCodeAuthError(
                 "LeetCode session expired or invalid — refresh LEETCODE_SESSION / "
                 "LEETCODE_CSRF_TOKEN secrets."
+            )
+        if resp.status_code == 403:
+            if resp.headers.get("Cf-Mitigated") == "challenge":
+                raise LeetCodeAccessError(
+                    "LeetCode's Cloudflare protection blocked the GitHub-hosted runner. "
+                    "Refreshing session/csrf secrets will not fix this; run the sync "
+                    "from a non-blocked self-hosted runner or locally."
+                )
+            raise LeetCodeAccessError(
+                "LeetCode denied the request (403). This is not necessarily an "
+                "expired session; check the response and runner access."
             )
         resp.raise_for_status()
 
@@ -207,7 +228,7 @@ def main():
 
     try:
         submissions = fetch_recent_accepted_submissions(limit=200)
-    except LeetCodeAuthError as exc:
+    except (LeetCodeAuthError, LeetCodeAccessError) as exc:
         print(exc)
         raise SystemExit(1) from exc
 

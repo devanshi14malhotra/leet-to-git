@@ -32,6 +32,17 @@ class SyncAuthTests(unittest.TestCase):
 
         self.assertEqual(cm.exception.code, 1)
 
+    def test_fetch_recent_accepted_submissions_explains_cloudflare_block(self):
+        with patch.object(mod.requests, "get") as mock_get:
+            mock_get.return_value.status_code = 403
+            mock_get.return_value.headers = {"Cf-Mitigated": "challenge"}
+
+            with self.assertRaises(mod.LeetCodeAccessError) as cm:
+                mod.fetch_recent_accepted_submissions(limit=50)
+
+        self.assertIn("Cloudflare protection blocked", str(cm.exception))
+        self.assertIn("self-hosted runner", str(cm.exception))
+
 
 if __name__ == "__main__":
     unittest.main()

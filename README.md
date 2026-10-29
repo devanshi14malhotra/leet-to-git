@@ -92,6 +92,12 @@ These expire every few weeks — when they do, the workflow will fail
 with a clear "session expired" message in the Actions log, and you
 just repeat this step with fresh values.
 
+If the log says that Cloudflare blocked the GitHub-hosted runner, refreshing
+these values will not help. LeetCode may challenge GitHub Actions IP ranges
+even when the cookies are valid. Run the workflow on a self-hosted runner
+with normal browser access, or run `python scripts/sync.py` locally from a
+machine that can access LeetCode.
+
 ### 4. Add them as repo secrets
 
 In your new GitHub repo: **Settings → Secrets and variables → Actions →
