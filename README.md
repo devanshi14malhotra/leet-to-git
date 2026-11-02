@@ -49,8 +49,8 @@ an access-blocking problem, not a workflow scheduling problem.
 The current implementation uses LeetCode GraphQL for the accepted-submission
 list and for submission details. It uses:
 
-- `LEETCODE_USERNAME` to identify the profile. This is configured as a
-  GitHub Actions variable and is not a secret.
+- `LEETCODE_USERNAME` to identify the profile. It is read from GitHub
+  Actions repository secrets so no account identifier is committed here.
 - `LEETCODE_SESSION` and `LEETCODE_CSRF_TOKEN` to authenticate access to
   private submission code and details.
 
@@ -77,9 +77,8 @@ need to export variables manually if you use that file.
 
 - The workflow runs automatically on GitHub's infrastructure every two hours
   (`0 */2 * * *`) and can also be started manually.
-- It uses repository secrets for `LEETCODE_SESSION` and
-  `LEETCODE_CSRF_TOKEN`, plus the `LEETCODE_USERNAME` Actions variable
-  configured in the repository.
+- It uses repository secrets for `LEETCODE_SESSION`,
+  `LEETCODE_CSRF_TOKEN`, and `LEETCODE_USERNAME`.
 - It creates one commit per new accepted submission, using a message
   like `LeetCode submission: problem 704 - Binary Search`.
 - It persists sync state in `.synced_submissions.json` so previously
@@ -155,15 +154,16 @@ machine that can access LeetCode.
 ### 4. Add them as repo secrets
 
 In your new GitHub repo: **Settings → Secrets and variables → Actions →
-New repository secret**. Add two secrets:
+New repository secret**. Add three secrets:
 
 - `LEETCODE_SESSION` → the value you copied
 - `LEETCODE_CSRF_TOKEN` → the csrftoken value you copied
 
 Also add `LEETCODE_USERNAME` under **Settings → Secrets and variables →
-Actions → Variables**. Do not add the username as a secret or commit your
-`.env` file. If your LeetCode username changes later, update this one
-Actions variable; the session and CSRF secrets are separate credentials.
+Actions → Repository secrets**. Although the username is not sensitive,
+keeping it there avoids committing it to the repository. If your LeetCode
+username changes later, update this secret; the session and CSRF secrets are
+separate credentials. Do not commit your `.env` file.
 
 No GitHub token needed. The workflow uses GitHub's
 own built-in `GITHUB_TOKEN`, automatically scoped to just this repo.

@@ -37,7 +37,7 @@ jobs:
         env:
           LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
           LEETCODE_CSRF_TOKEN: ${{ secrets.LEETCODE_CSRF_TOKEN }}
-          LEETCODE_USERNAME: ${{ vars.LEETCODE_USERNAME }}
+          LEETCODE_USERNAME: ${{ secrets.LEETCODE_USERNAME }}
         run: python scripts/sync.py
 
       - name: Push commits if anything changed
