@@ -11,6 +11,7 @@ you'd commit/push manually.
 Required environment variables:
     LEETCODE_SESSION      - your LeetCode session cookie
     LEETCODE_CSRF_TOKEN    - your LeetCode csrftoken cookie
+    LEETCODE_USERNAME      - your LeetCode profile username
 
 See README.md for how to obtain these and where to set them.
 """
@@ -37,7 +38,6 @@ SYNC_LOG_PATH = os.path.join(REPO_ROOT, ".synced_submissions.json")
 LOCAL_ENV_PATH = os.path.join(REPO_ROOT, ".env")
 
 LEETCODE_GRAPHQL_URL = "https://leetcode.com/graphql"
-LEETCODE_SUBMISSIONS_URL = "https://leetcode.com/api/submissions/"
 
 LANG_EXTENSIONS = {
     "python": "py", "python3": "py", "c": "c", "cpp": "cpp", "java": "java",
@@ -70,11 +70,17 @@ load_local_env()
 
 LEETCODE_SESSION = os.environ.get("LEETCODE_SESSION")
 LEETCODE_CSRF_TOKEN = os.environ.get("LEETCODE_CSRF_TOKEN")
+LEETCODE_USERNAME = os.environ.get("LEETCODE_USERNAME")
 
 
 def require_config():
-    missing = [n for n, v in [("LEETCODE_SESSION", LEETCODE_SESSION),
-                               ("LEETCODE_CSRF_TOKEN", LEETCODE_CSRF_TOKEN)] if not v]
+    missing = [
+        n for n, v in [
+            ("LEETCODE_SESSION", LEETCODE_SESSION),
+            ("LEETCODE_CSRF_TOKEN", LEETCODE_CSRF_TOKEN),
+            ("LEETCODE_USERNAME", LEETCODE_USERNAME),
+        ] if not v
+    ]
     if missing:
         print(f"Missing required environment variables: {', '.join(missing)}")
         sys.exit(1)
@@ -108,46 +114,70 @@ def save_sync_log(ids):
 
 
 def fetch_recent_accepted_submissions(limit=100):
-    submissions = []
-    offset = 0
-
-    while True:
-        resp = requests.get(
-            LEETCODE_SUBMISSIONS_URL,
-            params={"offset": offset, "limit": limit},
-            headers=leetcode_headers(),
-            timeout=15,
+    query = """
+    query recentAcceptedSubmissions($username: String!, $limit: Int!) {
+        userStatus {
+            isSignedIn
+            username
+        }
+        recentAcSubmissionList(username: $username, limit: $limit) {
+            id
+            title
+            titleSlug
+            timestamp
+            statusDisplay
+            lang
+        }
+    }
+    """
+    resp = requests.post(
+        LEETCODE_GRAPHQL_URL,
+        headers=leetcode_headers(),
+        json={
+            "query": query,
+            "variables": {
+                "username": LEETCODE_USERNAME,
+                "limit": limit,
+            },
+        },
+        timeout=15,
+    )
+    if resp.status_code in (401, 403):
+        raise LeetCodeAccessError(
+            f"LeetCode denied the GraphQL request ({resp.status_code}). "
+            "The session may be expired or the request may be blocked by Cloudflare."
         )
-        if resp.status_code == 401:
-            raise LeetCodeAuthError(
-                "LeetCode session expired or invalid — refresh LEETCODE_SESSION / "
-                "LEETCODE_CSRF_TOKEN secrets."
-            )
-        if resp.status_code == 403:
-            if resp.headers.get("Cf-Mitigated") == "challenge":
-                raise LeetCodeAccessError(
-                    "LeetCode's Cloudflare protection blocked the GitHub-hosted runner. "
-                    "Refreshing session/csrf secrets will not fix this; run the sync "
-                    "from a non-blocked self-hosted runner or locally."
-                )
-            raise LeetCodeAccessError(
-                "LeetCode denied the request (403). This is not necessarily an "
-                "expired session; check the response and runner access."
-            )
-        resp.raise_for_status()
+    resp.raise_for_status()
 
-        page = resp.json().get("submissions_dump", [])
-        if not page:
-            break
+    payload = resp.json()
+    if payload.get("errors"):
+        messages = "; ".join(error.get("message", "unknown GraphQL error")
+                             for error in payload["errors"])
+        raise LeetCodeAccessError(f"LeetCode GraphQL error: {messages}")
 
-        submissions.extend(s for s in page if s.get("status_display") == "Accepted")
+    user_status = payload.get("data", {}).get("userStatus") or {}
+    if not user_status.get("isSignedIn"):
+        raise LeetCodeAuthError(
+            "LeetCode session is not authenticated. Refresh LEETCODE_SESSION and "
+            "LEETCODE_CSRF_TOKEN, then update both the local .env and Actions secrets."
+        )
 
-        if len(page) < limit:
-            break
+    submissions = payload.get("data", {}).get("recentAcSubmissionList")
+    if submissions is None:
+        raise LeetCodeAccessError(
+            "LeetCode GraphQL returned no recent submissions for "
+            f"username {LEETCODE_USERNAME!r}."
+        )
 
-        offset += limit
-
-    return submissions
+    return [
+        {
+            "id": submission["id"],
+            "timestamp": submission.get("timestamp"),
+            "status_display": submission.get("statusDisplay"),
+        }
+        for submission in submissions
+        if submission.get("statusDisplay") == "Accepted"
+    ]
 
 
 def fetch_submission_details(submission_id):

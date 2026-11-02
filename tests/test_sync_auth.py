@@ -13,15 +13,14 @@ SPEC.loader.exec_module(mod)
 
 class SyncAuthTests(unittest.TestCase):
     def test_fetch_recent_accepted_submissions_raises_clear_auth_error_on_401(self):
-        with patch.object(mod.requests, "get") as mock_get:
+        with patch.object(mod.requests, "post") as mock_get:
             mock_get.return_value.status_code = 401
             mock_get.return_value.raise_for_status.side_effect = AssertionError("should not be called")
 
-            with self.assertRaises(mod.LeetCodeAuthError) as cm:
+            with self.assertRaises(mod.LeetCodeAccessError) as cm:
                 mod.fetch_recent_accepted_submissions(limit=50)
 
-        self.assertIn("expired or invalid", str(cm.exception))
-        self.assertIn("LEETCODE_SESSION", str(cm.exception))
+        self.assertIn("GraphQL request", str(cm.exception))
 
     def test_main_exits_with_nonzero_status_when_auth_is_invalid(self):
         with patch.object(mod, "require_config", return_value=None), \
@@ -32,16 +31,29 @@ class SyncAuthTests(unittest.TestCase):
 
         self.assertEqual(cm.exception.code, 1)
 
-    def test_fetch_recent_accepted_submissions_explains_cloudflare_block(self):
-        with patch.object(mod.requests, "get") as mock_get:
+    def test_fetch_recent_accepted_submissions_explains_access_block(self):
+        with patch.object(mod.requests, "post") as mock_get:
             mock_get.return_value.status_code = 403
-            mock_get.return_value.headers = {"Cf-Mitigated": "challenge"}
 
             with self.assertRaises(mod.LeetCodeAccessError) as cm:
                 mod.fetch_recent_accepted_submissions(limit=50)
 
-        self.assertIn("Cloudflare protection blocked", str(cm.exception))
-        self.assertIn("self-hosted runner", str(cm.exception))
+        self.assertIn("GraphQL request", str(cm.exception))
+
+    def test_fetch_recent_accepted_submissions_rejects_unsigned_session(self):
+        with patch.object(mod.requests, "post") as mock_post:
+            mock_post.return_value.status_code = 200
+            mock_post.return_value.json.return_value = {
+                "data": {
+                    "userStatus": {"isSignedIn": False},
+                    "recentAcSubmissionList": [],
+                }
+            }
+
+            with self.assertRaises(mod.LeetCodeAuthError) as cm:
+                mod.fetch_recent_accepted_submissions(limit=50)
+
+        self.assertIn("not authenticated", str(cm.exception))
 
 
 if __name__ == "__main__":
